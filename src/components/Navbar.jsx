@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Bell, Menu, MessageSquare, Search, MapPin, Clock, Car } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const NavBar = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -14,10 +15,10 @@ const NavBar = () => {
           {/* Left Section */}
           <div className="flex items-center">
             {/* Menu Button */}
-            <button className="p-2 rounded-md text-gray-800 hover:bg-yellow-500">
+            <button  className="p-2 rounded-md text-gray-800 hover:bg-yellow-500">
               <Menu className="h-6 w-6" />
             </button>
-            
+
             {/* Logo */}
             <div className="ml-4 flex items-center space-x-2">
               <Car className="h-8 w-8 text-gray-800" />
@@ -44,48 +45,56 @@ const NavBar = () => {
           </div>
 
           {/* Right Section */}
+
           <div className="flex items-center space-x-4">
-            {/* Active Ride Status */}
+            {/* Active Ride Status */},
+
             {activeRide && (
-              <div className="hidden md:flex items-center space-x-2 px-3 py-1 bg-gray-800 text-yellow-400 rounded-full">
+              <Link to= "/rideinprogress" className="hidden md:flex items-center space-x-2 px-3 py-1 bg-gray-800 text-yellow-400 rounded-full">
                 <Clock className="h-4 w-4" />
                 <span className="text-sm">Ride in Progress</span>
-              </div>
+              </Link>
             )}
 
             {/* Notifications */}
-            <button className="relative p-2 rounded-full text-gray-800 hover:bg-yellow-500">
-              <Bell className="h-6 w-6" />
-              {notificationCount > 0 && (
-                <span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-gray-800 text-yellow-400 text-xs font-medium flex items-center justify-center">
-                  {notificationCount}
-                </span>
-              )}
-            </button>
+            <Link to="notifications">
+              <button className="relative p-2 rounded-full text-gray-800 hover:bg-yellow-500">
+                <Bell className="h-6 w-6" />
+                {notificationCount > 0 && (
+                  <span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-gray-800 text-yellow-400 text-xs font-medium flex items-center justify-center">
+                    {notificationCount}
+                  </span>
+                )}
+              </button>
+            </Link>
 
             {/* Messages */}
-            <button className="relative p-2 rounded-full text-gray-800 hover:bg-yellow-500">
-              <MessageSquare className="h-6 w-6" />
-              {messageCount > 0 && (
-                <span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-gray-800 text-yellow-400 text-xs font-medium flex items-center justify-center">
-                  {messageCount}
-                </span>
-              )}
-            </button>
+            <Link to="chatpage">
+              <button className="relative p-2 rounded-full text-gray-800 hover:bg-yellow-500">
+                <MessageSquare className="h-6 w-6" />
+                {messageCount > 0 && (
+                  <span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-gray-800 text-yellow-400 text-xs font-medium flex items-center justify-center">
+                    {messageCount}
+                  </span>
+                )}
+              </button>
+            </Link>
 
             {/* Profile */}
-            <button className="flex items-center space-x-3 p-2 rounded-full hover:bg-yellow-500">
-              <div className="w-8 h-8 rounded-full bg-gray-800 border-2 border-gray-800 overflow-hidden">
-                <img
-                  src="/api/placeholder/32/32"
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <span className="hidden md:block text-sm font-medium text-gray-800">
-                John Doe
-              </span>
-            </button>
+            <Link to="userprofile" >
+              <button className="flex items-center space-x-3 p-2 rounded-full hover:bg-yellow-500">
+                <div className="w-8 h-8 rounded-full bg-gray-800 border-2 border-gray-800 overflow-hidden">
+                  <img
+                    src="/api/placeholder/32/32"
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <span className="hidden md:block text-sm font-medium text-gray-800">
+                  Marie
+                </span>
+              </button>
+            </Link>
           </div>
         </div>
       </div>

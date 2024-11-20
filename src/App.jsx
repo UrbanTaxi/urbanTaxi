@@ -11,6 +11,10 @@ import DriverDashboardLayout from './layouts/DriverDashboardLayout'
 import DriverProfile from './pages/dashboard/driver/DriverProfile'
 import DriverDashboard from './pages/dashboard/driver'
 import DriverSidebar from './components/DriverSidebar'
+import Notifications from './components/Notifications'
+import ChatPage from './components/ChatPage'
+import RideInProgress from './components/RideinProgress'
+import UserProfile from './components/UserProfile'
 // import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card
 
 
@@ -29,13 +33,33 @@ const App = () => {
         element: <Login />
       },
       {
+        path: 'login',
+        element: <Login />
+      },
+      {
         path: 'register',
         element: <Register />
       },
       {
+        path: 'rideinprogress',
+        element: <RideInProgress/>
+      },
+      {
+        path: 'userprofile',
+        element: <UserProfile/>
+      },
+      {
         path: 'driversidebar',
         element: <DriverSidebar/>
-      }
+      },
+      {
+        path:"notifications",
+        element:<Notifications />
+      },
+      {
+        path:"chatpage",
+        element:<ChatPage/>
+      },
       ]
     },
 
@@ -52,7 +76,7 @@ const App = () => {
         {
           path:"profile",
           element:<RiderProfile />
-        }
+        },
       ],
     },
     {
@@ -65,8 +89,8 @@ const App = () => {
 
         },
         {
-          path:"profile",
-          element:<DriverProfile />
+          path:"userprofile",
+          element:<UserProfile/>
         }
       ],
     }
