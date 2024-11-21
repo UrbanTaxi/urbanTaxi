@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Car, Mail, Lock, User, Phone, EyeOff, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -38,9 +41,65 @@ const RegisterPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle registration logic here
+    
+    // Basic validation
+    if (formData.password !== formData.confirmPassword) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: "Passwords don't match!",
+        confirmButtonColor: '#EAB308' // yellow-500
+      });
+      return;
+    }
+
+    try {
+      // Here you would typically make an API call to register the user
+      // For now, we'll just simulate a successful registration
+      
+      // You can add your registration API call here
+      // await registerUser(formData);
+
+      // Show success message
+      await Swal.fire({
+        icon: 'success',
+        title: 'Registration Successful!',
+        text: 'Welcome to Urban Taxi',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'center',
+        background: '#fff',
+        iconColor: '#EAB308', // yellow-500
+        customClass: {
+          popup: 'rounded-lg',
+          title: 'text-gray-800',
+          text: 'text-gray-600'
+        }
+      });
+
+      // Redirect to rider dashboard after the alert closes
+      navigate('/dashboard/rider');
+      
+      // After successful registration, store user data
+      const userData = {
+        name: formData.name, // or however you've structured your form data
+        username: formData.username,
+        // other user data...
+      };
+      
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+    } catch (error) {
+      console.error('Registration failed:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Registration Failed',
+        text: 'Please try again later.',
+        confirmButtonColor: '#EAB308' // yellow-500
+      });
+    }
   };
 
   return (
@@ -142,7 +201,7 @@ const RegisterPage = () => {
                   type="tel"
                   required
                   className="block w-full pl-10 pr-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="+233 (020) 000-0000"
                   value={formData.phone}
                   onChange={handleChange}
                 />
@@ -268,9 +327,9 @@ const RegisterPage = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{' '}
-              <a href="#" className="font-medium text-yellow-600 hover:text-yellow-500">
+              <Link to ="/login" className="font-medium text-yellow-600 hover:text-yellow-500">
                 Sign in here
-              </a>
+              </Link>
             </p>
           </div>
         </div>

@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Car, Mail, Lock, EyeOff, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 const LoginPage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -9,6 +12,21 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userData, setUserData] = useState({
+    name: '',
+    rating: '4.9' // default rating or you can store this in your user data too
+  });
+
+  useEffect(() => {
+    // Get user data from localStorage
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user) {
+      setUserData({
+        name: user.name || user.username, // depending on how you stored the name
+        rating: '4.9' // you can add rating to user data if needed
+      });
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,28 +42,55 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const response = await fetch('https://ride-api-txcu.onrender.com/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
+      // const response = await fetch('https://ride-api-txcu.onrender.com/login', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json'
+      //   },
+      //   body: JSON.stringify(formData)
+      // });
+
+      // const data = await response.json();
+
+      // if (!response.ok) {
+      //   throw new Error(data.message || 'Login failed');
+      // }
+
+      // // Store token and user data
+      // localStorage.setItem('token', data.token);
+      // localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Show success message
+      await Swal.fire({
+        icon: 'success',
+        title: 'Login Successful!',
+        text: 'Welcome back to Urban Taxi',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'center',
+        background: '#fff',
+        iconColor: '#EAB308',
+        customClass: {
+          popup: 'rounded-lg',
+          title: 'text-gray-800',
+          text: 'text-gray-600'
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      // Store token and redirect
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      // Redirect to dashboard or home page
-      window.location.href = '/dashboard';
+      // Redirect to rider dashboard
+      navigate('/dashboard/rider');
       
     } catch (err) {
       setError(err.message || 'Failed to login. Please check your credentials.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Login Failed',
+        text: err.message || 'Please check your credentials and try again.',
+        confirmButtonColor: '#EAB308',
+        customClass: {
+          popup: 'rounded-lg'
+        }
+      });
     } finally {
       setLoading(false);
     }

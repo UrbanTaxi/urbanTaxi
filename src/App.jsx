@@ -15,6 +15,11 @@ import Notifications from './components/Notifications'
 import ChatPage from './components/ChatPage'
 import RideInProgress from './components/RideinProgress'
 import UserProfile from './components/UserProfile'
+import RideCard from './components/RideCard'
+import SearchingDriver from './components/SearchingDriver'
+import { MapProvider } from './contexts/MapContext';
+import AccountSettings from './components/AccountSettings'
+import TrackRide from './components/TrackRide'
 // import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card
 
 
@@ -60,6 +65,30 @@ const App = () => {
         path:"chatpage",
         element:<ChatPage/>
       },
+      {
+        path:"rideCard",
+        element:<RideCard />
+      },
+      {
+        path:"searchingdriver",
+        element:<SearchingDriver />
+      },
+      {
+        path:"chat",
+        element:<ChatPage />
+      },
+      {
+        path:"rider/profile",
+        element:<UserProfile />
+      },
+      {
+        path:"rider/settings",
+        element:<AccountSettings />
+      },
+      {
+        path:"rider/track-ride",
+        element:<TrackRide />
+      },
       ]
     },
 
@@ -77,6 +106,7 @@ const App = () => {
           path:"profile",
           element:<RiderProfile />
         },
+        
       ],
     },
     {
@@ -88,15 +118,17 @@ const App = () => {
           element: <DriverDashboard/>,
 
         },
-        {
-          path:"userprofile",
-          element:<UserProfile/>
-        }
+        // {
+        //   path:"userprofile",
+        //   element:<UserProfile/>
+        // }
       ],
     }
   ])
 
-  return <RouterProvider router={router} />
+  return <MapProvider>
+    <RouterProvider router={router} />
+  </MapProvider>
 }
 
 export default App

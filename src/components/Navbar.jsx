@@ -1,29 +1,49 @@
-import React, { useState } from 'react';
-import { Bell, Menu, MessageSquare, Search, MapPin, Clock, Car } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Menu, MapPin, Car } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const NavBar = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [notificationCount] = useState(3);
-  const [messageCount] = useState(2);
-  const [activeRide] = useState(true); // For demonstration of active ride status
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <nav className="bg-yellow-400 border-b border-yellow-500 fixed w-full top-0 z-50">
+    <nav className={`fixed w-full top-0 z-50 transition-all duration-300 ${
+      isScrolled ? 'bg-white shadow-md' : 'bg-yellow-400'
+    }`}>
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-16">
           {/* Left Section */}
           <div className="flex items-center">
             {/* Menu Button */}
-            <button  className="p-2 rounded-md text-gray-800 hover:bg-yellow-500">
+            <button className={`p-2 rounded-lg hover:bg-opacity-10 hover:bg-black transition-colors ${
+              isScrolled ? 'text-gray-800' : 'text-gray-800'
+            }`}>
               <Menu className="h-6 w-6" />
             </button>
 
             {/* Logo */}
-            <div className="ml-4 flex items-center space-x-2">
-              <Car className="h-8 w-8 text-gray-800" />
-              <span className="text-2xl font-bold text-gray-800">URBAN TAXI</span>
-            </div>
+            <Link to="/" className="ml-4 flex items-center space-x-2 group">
+              <div className="relative">
+                <Car className={`h-8 w-8 transition-colors ${
+                  isScrolled ? 'text-yellow-500' : 'text-gray-800'
+                }`} />
+                <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 rounded-full transition-opacity" />
+              </div>
+              <span className={`text-2xl font-bold transition-colors ${
+                isScrolled ? 'text-gray-800' : 'text-gray-800'
+              }`}>
+                URBAN TAXI
+              </span>
+            </Link>
           </div>
 
           {/* Center Section - Search */}
@@ -31,70 +51,22 @@ const NavBar = () => {
             <div className="w-full">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MapPin className="h-5 w-5 text-gray-500" />
+                  <MapPin className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   type="text"
-                  className="block w-full pl-10 pr-3 py-2 border-2 border-gray-800 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-transparent"
+                  className={`block w-full pl-10 pr-4 py-2 border transition-all duration-300 rounded-full
+                    ${isScrolled 
+                      ? 'border-gray-200 focus:border-yellow-500 focus:ring-yellow-500' 
+                      : 'border-gray-800 focus:border-gray-900 focus:ring-gray-900'
+                    } 
+                    bg-white focus:outline-none focus:ring-2`}
                   placeholder="Where to?"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
-          </div>
-
-          {/* Right Section */}
-
-          <div className="flex items-center space-x-4">
-            {/* Active Ride Status */},
-
-            {activeRide && (
-              <Link to= "/rideinprogress" className="hidden md:flex items-center space-x-2 px-3 py-1 bg-gray-800 text-yellow-400 rounded-full">
-                <Clock className="h-4 w-4" />
-                <span className="text-sm">Ride in Progress</span>
-              </Link>
-            )}
-
-            {/* Notifications */}
-            <Link to="notifications">
-              <button className="relative p-2 rounded-full text-gray-800 hover:bg-yellow-500">
-                <Bell className="h-6 w-6" />
-                {notificationCount > 0 && (
-                  <span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-gray-800 text-yellow-400 text-xs font-medium flex items-center justify-center">
-                    {notificationCount}
-                  </span>
-                )}
-              </button>
-            </Link>
-
-            {/* Messages */}
-            <Link to="chatpage">
-              <button className="relative p-2 rounded-full text-gray-800 hover:bg-yellow-500">
-                <MessageSquare className="h-6 w-6" />
-                {messageCount > 0 && (
-                  <span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-gray-800 text-yellow-400 text-xs font-medium flex items-center justify-center">
-                    {messageCount}
-                  </span>
-                )}
-              </button>
-            </Link>
-
-            {/* Profile */}
-            <Link to="userprofile" >
-              <button className="flex items-center space-x-3 p-2 rounded-full hover:bg-yellow-500">
-                <div className="w-8 h-8 rounded-full bg-gray-800 border-2 border-gray-800 overflow-hidden">
-                  <img
-                    src="/api/placeholder/32/32"
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <span className="hidden md:block text-sm font-medium text-gray-800">
-                  Marie
-                </span>
-              </button>
-            </Link>
           </div>
         </div>
       </div>

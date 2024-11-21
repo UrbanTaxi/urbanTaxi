@@ -1,5 +1,6 @@
 import React from 'react';
 import { MapPin, ChevronRight, Star, Shield, Clock, Car, Phone } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // Main hero section component
 const Hero = () => (
@@ -15,11 +16,11 @@ const Hero = () => (
         </p>
         <div className="flex flex-wrap gap-4">
           <button className="inline-flex items-center px-6 py-3 text-lg font-medium bg-black text-yellow-400 hover:bg-gray-800 rounded-md">
-            Book a Ride
+            <Link to="/register">Register</Link>
             <ChevronRight className="ml-2 h-4 w-4" />
           </button>
           <button className="inline-flex items-center px-6 py-3 text-lg font-medium border-2 border-black text-black hover:bg-yellow-100 rounded-md">
-            Download App
+            <Link to="/login">Login</Link>
           </button>
         </div>
       </div>
