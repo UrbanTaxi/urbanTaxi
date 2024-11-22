@@ -198,7 +198,7 @@ function RideCard({ isOpen, onClose }) {
               <div className="text-right">
                 <p className="text-sm text-gray-500">Estimated Time</p>
                 <p className="text-sm font-medium text-gray-800">
-                  {fare.time > 0 ? `₵{fare.time} mins` : '--'}
+                  {fare.time > 0 ? `${fare.time} mins` : '--'}
                 </p>
               </div>
             </div>

@@ -87,7 +87,7 @@ const SearchingDriver = () => {
       <div className="flex justify-between items-center">
         <div>
           <p className="text-sm text-gray-600">Estimated Fare</p>
-          <p className="text-2xl font-semibold text-gray-800">${estimatedFare}</p>
+          <p className="text-2xl font-semibold text-gray-800">₵{estimatedFare}</p>
         </div>
         <div className="text-right">
           <p className="text-sm text-gray-600">Payment Method</p>
