@@ -20,14 +20,51 @@ function RideCard({ isOpen, onClose }) {
   // Calculate fare based on location input changes
   useEffect(() => {
     if (locations.pickup && locations.dropoff) {
-      // This is a simple example calculation
-      // You can replace this with your actual fare calculation logic
-      const baseRate = 5.00;
-      const perCharacterRate = 0.50; // Using string length as a simple demo
-      const totalChars = locations.pickup.length + locations.dropoff.length;
+      // Calculate approximate distance
+      const calculateDistance = (pickup, dropoff) => {
+        // This is still a simulation but more varied than before
+        const pickupLength = pickup.length;
+        const dropoffLength = dropoff.length;
+        const randomFactor = Math.random() * 0.8 + 0.9; // Random factor between 0.8 and 1.3
+        return Math.max(3, ((pickupLength + dropoffLength) * randomFactor)); // Minimum 3km
+      };
+
+      const distance = calculateDistance(locations.pickup, locations.dropoff);
       
-      const calculatedFare = baseRate + (totalChars * perCharacterRate);
-      const estimatedTime = Math.max(10, Math.floor(totalChars * 0.5));
+      // Fare calculation
+      const baseRate = 10.00; // Base fare in Ghana Cedis
+      const perKmRate = 2.50;  // Rate per kilometer
+      const calculatedFare = baseRate + (distance * perKmRate);
+
+      // Time calculation with traffic consideration
+      const calculateTime = (distance) => {
+        const timeOfDay = new Date().getHours();
+        let averageSpeed;
+        
+        // Adjust speed based on time of day (simulating traffic conditions)
+        if (timeOfDay >= 7 && timeOfDay <= 9) {
+          // Morning rush hour
+          averageSpeed = 20;
+        } else if (timeOfDay >= 16 && timeOfDay <= 18) {
+          // Evening rush hour
+          averageSpeed = 15;
+        } else if (timeOfDay >= 22 || timeOfDay <= 5) {
+          // Night time - faster speeds
+          averageSpeed = 40;
+        } else {
+          // Normal daytime traffic
+          averageSpeed = 30;
+        }
+
+        // Add some randomness to make it more realistic
+        const randomDelay = Math.floor(Math.random() * 10); // 0-10 minutes random delay
+        const estimatedTimeInHours = distance / averageSpeed;
+        const estimatedTimeInMinutes = Math.ceil(estimatedTimeInHours * 60) + randomDelay;
+        
+        return estimatedTimeInMinutes;
+      };
+
+      const estimatedTime = calculateTime(distance);
 
       setFare({
         amount: calculatedFare.toFixed(2),
@@ -155,7 +192,7 @@ function RideCard({ isOpen, onClose }) {
               <div>
                 <p className="text-sm text-gray-500">Estimated Fare</p>
                 <p className="text-xl font-semibold text-gray-800">
-                  ${fare.amount > 0 ? fare.amount : '--'}
+                ₵{fare.amount > 0 ? fare.amount : '--'}
                 </p>
               </div>
               <div className="text-right">
