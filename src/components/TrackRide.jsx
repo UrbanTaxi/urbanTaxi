@@ -74,6 +74,33 @@ const TrackRide = () => {
     });
   };
 
+  const handleEndRide = () => {
+    Swal.fire({
+      title: 'End Ride?',
+      text: "Are you sure you want to end this ride?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#EF4444', // red color
+      cancelButtonColor: '#9CA3AF',
+      confirmButtonText: 'Yes, end ride',
+      cancelButtonText: 'Cancel',
+      background: '#ffffff',
+      customClass: {
+        popup: 'rounded-lg',
+        title: 'text-gray-800 font-semibold',
+        content: 'text-gray-600',
+        confirmButton: 'rounded-lg px-4 py-2',
+        cancelButton: 'rounded-lg px-4 py-2'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.removeItem('currentRide');
+        setActiveRide(null);
+        navigate('/dashboard/rider');
+      }
+    });
+  };
+
   if (!activeRide) return null;
 
   return (
@@ -160,6 +187,14 @@ const TrackRide = () => {
                     <div className="absolute inset-0 bg-white/30 animate-pulse"></div>
                   </div>
                 </div>
+
+                <button
+                  onClick={handleEndRide}
+                  className="w-full mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Navigation className="w-4 h-4" />
+                  <span>End Ride</span>
+                </button>
               </div>
             </div>
 

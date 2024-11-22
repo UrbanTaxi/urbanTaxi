@@ -81,6 +81,7 @@ const RegisterPage = () => {
 
       // Redirect to rider dashboard after the alert closes
       navigate('/dashboard/rider');
+      window.scrollTo(0, 0);
       
       // After successful registration, store user data
       const userData = {
