@@ -29,29 +29,33 @@ const RiderSidebar = () => {
   });
 
   useEffect(() => {
-    // Get user data from localStorage
-    const user = JSON.parse(localStorage.getItem('user'));
-    const currentRide = JSON.parse(localStorage.getItem('currentRide'));
-    
-    if (user) {
-      setUserData({
-        name: user.name || user.username,
-        rating: '4.9'
-      });
-    }
+    // Get user data and check for active rides
+    const checkActiveRide = () => {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const rides = JSON.parse(localStorage.getItem('userRides') || '[]');
+      
+      // Find the most recent ride that isn't completed or cancelled
+      const currentRide = rides.find(ride => 
+        ride.status !== 'Completed' && 
+        ride.status !== 'Cancelled'
+      );
+      
+      if (user) {
+        setUserData({
+          name: user.name || user.username,
+          rating: '4.9'
+        });
+      }
 
-    if (currentRide) {
-      setActiveRide(currentRide);
-    }
-
-    // Listen for changes in localStorage
-    const handleStorageChange = () => {
-      const updatedRide = JSON.parse(localStorage.getItem('currentRide'));
-      setActiveRide(updatedRide);
+      setActiveRide(currentRide || null);
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    // Initial check
+    checkActiveRide();
+
+    // Listen for changes in localStorage
+    window.addEventListener('storage', checkActiveRide);
+    return () => window.removeEventListener('storage', checkActiveRide);
   }, []);
 
   const handleTrackRide = () => {
@@ -70,59 +74,78 @@ const RiderSidebar = () => {
     { icon: HelpCircle, label: 'Help & Support', onClick: () => {} }
   ];
 
-  // Quick Actions Section
-  const QuickActions = () => (
-    <div className={`p-4 border-b border-gray-200 ${!isExpanded && 'text-center'}`}>
-      <div className="flex justify-between items-center mb-2">
-        {isExpanded && <h4 className="text-sm font-medium text-gray-700">Quick Actions</h4>}
-        <button 
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
-        >
-          {isExpanded ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-        </button>
-      </div>
-      <div className={`grid ${isExpanded ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
-        <button 
-          className="p-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-800 rounded-lg hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <MapPin className="w-4 h-4" />
-          {isExpanded && <span>Book Now</span>}
-        </button>
-        {activeRide ? (
+  // Quick Actions Section with updated logic
+  const QuickActions = () => {
+    // Get the latest ride status
+    const rides = JSON.parse(localStorage.getItem('userRides') || '[]');
+    const latestRide = rides[0]; // Most recent ride
+    
+    // Determine if we should show Book Now or Track Ride
+    const showBookNow = !latestRide || 
+      latestRide.status === 'Completed' || 
+      latestRide.status === 'Cancelled';
+
+    return (
+      <div className={`p-4 border-b border-gray-200 ${!isExpanded && 'text-center'}`}>
+        <div className="flex justify-between items-center mb-2">
+          {isExpanded && <h4 className="text-sm font-medium text-gray-700">Quick Actions</h4>}
           <button 
-            onClick={handleTrackRide}
-            className="p-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-gray-500 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
           >
-            <Navigation className="w-4 h-4" />
-            {isExpanded && <span>Track Ride</span>}
+            {isExpanded ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
-        ) : (
-          <button className="p-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 text-sm font-medium">
+        </div>
+        <div className={`grid ${isExpanded ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
+          {showBookNow ? (
+            // Show Book Now button
+            <button 
+              className="p-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-800 rounded-lg hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium"
+              onClick={() => setIsModalOpen(true)}
+            >
+              <MapPin className="w-4 h-4" />
+              {isExpanded && <span>Book Now</span>}
+            </button>
+          ) : (
+            // Show Track Ride button
+            <button 
+              onClick={handleTrackRide}
+              className="p-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+            >
+              <Navigation className="w-4 h-4" />
+              {isExpanded && <span>Track Ride</span>}
+            </button>
+          )}
+          <button 
+            className="p-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+            onClick={() => navigate('/rider/schedule')}
+          >
             <Clock className="w-4 h-4" />
             {isExpanded && <span>Schedule</span>}
           </button>
+        </div>
+        
+        {/* Active Ride Status - Only show if expanded and there's an active ride */}
+        {isExpanded && activeRide && !showBookNow && (
+          <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-100">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-green-800">Active Ride</span>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <span className="text-xs text-green-600">{activeRide.status}</span>
+              </div>
+            </div>
+            <p className="text-xs text-green-700 truncate">
+              From: {activeRide.pickup}
+            </p>
+            <p className="text-xs text-green-700 truncate">
+              To: {activeRide.dropoff}
+            </p>
+          </div>
         )}
       </div>
-      
-      {/* Active Ride Status - Only show if expanded and there's an active ride */}
-      {isExpanded && activeRide && (
-        <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-100">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-green-800">Active Ride</span>
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-xs text-green-600">In Progress</span>
-            </div>
-          </div>
-          <p className="text-xs text-green-700 truncate">
-            To: {activeRide.dropoff}
-          </p>
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   return (
     <>

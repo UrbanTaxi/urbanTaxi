@@ -20,6 +20,7 @@ import SearchingDriver from './components/SearchingDriver'
 import { MapProvider } from './contexts/MapContext';
 import AccountSettings from './components/AccountSettings'
 import TrackRide from './components/TrackRide'
+import MyRides from './pages/MyRides'
 // import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card
 
 
@@ -88,6 +89,10 @@ const App = () => {
       {
         path:"rider/track-ride",
         element:<TrackRide />
+      },
+      {
+        path:"rider/rides",
+        element:<MyRides />
       },
       ]
     },

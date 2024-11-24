@@ -6,15 +6,15 @@ import Swal from 'sweetalert2';
 const SearchingDriver = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { pickup, dropoff, estimatedFare, returnFromChat } = location.state || {
-    pickup: 'Current Location',
-    dropoff: 'Destination',
-    estimatedFare: '25.00',
-    returnFromChat: false
-  };
-
-  const [status, setStatus] = useState(returnFromChat ? 'found' : 'searching');
-  const [driver, setDriver] = useState(returnFromChat ? {
+  
+  // Add all state declarations at the top
+  const [rideLocations, setRideLocations] = useState({
+    pickup: location.state?.pickup || 'Loading pickup location...',
+    dropoff: location.state?.dropoff || 'Loading destination...'
+  });
+  const [status, setStatus] = useState(location.state?.returnFromChat ? 'found' : 'searching');
+  const [estimatedFare, setEstimatedFare] = useState(location.state?.estimatedFare || '0.00');
+  const [driver, setDriver] = useState(location.state?.returnFromChat ? {
     name: 'John Doe',
     rating: 4.8,
     carModel: 'Toyota Camry',
@@ -22,8 +22,28 @@ const SearchingDriver = () => {
     phone: '+254 712 345 678'
   } : null);
   const [searchDots, setSearchDots] = useState('');
-  const [driverStatus, setDriverStatus] = useState(returnFromChat ? 'arrived' : 'accepting');
+  const [driverStatus, setDriverStatus] = useState(location.state?.returnFromChat ? 'arrived' : 'accepting');
   const [rideStarted, setRideStarted] = useState(false);
+
+  // Get the latest ride from localStorage to ensure we have the correct locations
+  useEffect(() => {
+    const rides = JSON.parse(localStorage.getItem('userRides') || '[]');
+    if (rides.length > 0) {
+      const latestRide = rides[0];
+      console.log('Latest Ride from localStorage:', latestRide);
+      
+      if (latestRide.pickup && latestRide.dropoff) {
+        setRideLocations({
+          pickup: latestRide.pickup,
+          dropoff: latestRide.dropoff
+        });
+        // If there's an estimatedFare in localStorage, use it
+        if (latestRide.estimatedFare) {
+          setEstimatedFare(latestRide.estimatedFare);
+        }
+      }
+    }
+  }, []);
 
   // Animate the searching dots
   useEffect(() => {
@@ -37,7 +57,7 @@ const SearchingDriver = () => {
 
   // Only run the driver finding simulation if not returning from chat
   useEffect(() => {
-    if (!returnFromChat) {
+    if (!location.state?.returnFromChat) {
       // First find the driver
       const findDriverTimer = setTimeout(() => {
         setStatus('found');
@@ -67,14 +87,14 @@ const SearchingDriver = () => {
 
       return () => clearTimeout(findDriverTimer);
     }
-  }, [returnFromChat]);
+  }, [location.state?.returnFromChat]);
 
   const handleMessageDriver = () => {
     navigate('/chat', { 
       state: { 
         driver: driver,
-        pickup: pickup,
-        dropoff: dropoff,
+        pickup: rideLocations.pickup,
+        dropoff: rideLocations.dropoff,
         returnPath: '/searchingdriver',
         estimatedFare: estimatedFare
       } 
@@ -118,29 +138,30 @@ const SearchingDriver = () => {
       confirmButtonColor: '#EAB308',
       cancelButtonColor: '#9CA3AF',
       confirmButtonText: 'Start Ride',
-      cancelButtonText: 'Wait',
-      background: '#ffffff',
-      customClass: {
-        popup: 'rounded-lg',
-        title: 'text-gray-800 font-semibold',
-        content: 'text-gray-600',
-        confirmButton: 'rounded-lg px-4 py-2',
-        cancelButton: 'rounded-lg px-4 py-2'
-      }
+      cancelButtonText: 'Wait'
     }).then((result) => {
       if (result.isConfirmed) {
-        // Store ride details in localStorage for dashboard
+        // Store ride details in localStorage with correct locations
         const rideDetails = {
           driver,
-          pickup,
-          dropoff,
-          estimatedFare,
+          pickup: rideLocations.pickup,
+          dropoff: rideLocations.dropoff,
+          estimatedFare: estimatedFare,
           status: 'in_progress',
           startTime: new Date().toISOString()
         };
         localStorage.setItem('currentRide', JSON.stringify(rideDetails));
         
-        // Navigate to dashboard
+        // Update the existing ride in userRides
+        const rides = JSON.parse(localStorage.getItem('userRides') || '[]');
+        if (rides.length > 0) {
+          rides[0] = {
+            ...rides[0],
+            status: 'in_progress'
+          };
+          localStorage.setItem('userRides', JSON.stringify(rides));
+        }
+
         navigate('/dashboard/rider', { 
           state: { 
             rideInProgress: true,
@@ -192,7 +213,7 @@ const SearchingDriver = () => {
                   </div>
                   <div className="text-left">
                     <p className="text-sm text-gray-500">Pickup Location</p>
-                    <p className="font-medium text-gray-800">{pickup}</p>
+                    <p className="font-medium text-gray-800">{rideLocations.pickup}</p>
                   </div>
                 </div>
                 
@@ -204,7 +225,7 @@ const SearchingDriver = () => {
                   </div>
                   <div className="text-left">
                     <p className="text-sm text-gray-500">Drop-off Location</p>
-                    <p className="font-medium text-gray-800">{dropoff}</p>
+                    <p className="font-medium text-gray-800">{rideLocations.dropoff}</p>
                   </div>
                 </div>
               </div>
@@ -314,7 +335,7 @@ const SearchingDriver = () => {
                   </div>
                   <div className="text-left">
                     <p className="text-sm text-gray-500">Pickup Location</p>
-                    <p className="font-medium text-gray-800">{pickup}</p>
+                    <p className="font-medium text-gray-800">{rideLocations.pickup}</p>
                   </div>
                 </div>
                 
@@ -326,7 +347,7 @@ const SearchingDriver = () => {
                   </div>
                   <div className="text-left">
                     <p className="text-sm text-gray-500">Drop-off Location</p>
-                    <p className="font-medium text-gray-800">{dropoff}</p>
+                    <p className="font-medium text-gray-800">{rideLocations.dropoff}</p>
                   </div>
                 </div>
               </div>

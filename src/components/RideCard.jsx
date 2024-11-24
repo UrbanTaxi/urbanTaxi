@@ -1,8 +1,9 @@
 // src/components/RideCard.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, Star, X, MapPin } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import { ghanaLocations } from '../data/ghanaLocations';
 
 function RideCard({ isOpen, onClose }) {
   const navigate = useNavigate();
@@ -10,12 +11,166 @@ function RideCard({ isOpen, onClose }) {
     pickup: '',
     dropoff: ''
   });
+  const [suggestions, setSuggestions] = useState({
+    pickup: [],
+    dropoff: []
+  });
+  const [isLoading, setIsLoading] = useState({
+    pickup: false,
+    dropoff: false
+  });
+  const [activeInput, setActiveInput] = useState(null);
+  const dropdownRef = useRef(null);
+  const debounceTimerRef = useRef(null);
   const [fare, setFare] = useState({
     amount: 0,
     time: 0
   });
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [mobileNumber, setMobileNumber] = useState('');
+
+  // Search locations from API
+  const searchLocationsAPI = async (query) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${query}+ghana&format=json&limit=5`
+      );
+      const data = await response.json();
+      return data.map(item => ({
+        name: item.display_name,
+        source: 'api',
+        coordinates: [item.lat, item.lon]
+      }));
+    } catch (error) {
+      console.error('Error fetching API locations:', error);
+      return [];
+    }
+  };
+
+  // Search locations from local data
+  const searchLocationsLocal = (query) => {
+    return ghanaLocations
+      .filter(location => 
+        location.toLowerCase().includes(query.toLowerCase())
+      )
+      .map(location => ({
+        name: location,
+        source: 'local'
+      }))
+      .slice(0, 5);
+  };
+
+  // Combine both local and API results
+  const getCombinedLocations = async (query) => {
+    if (!query || query.length < 2) return [];
+
+    setIsLoading(prev => ({ ...prev, [activeInput]: true }));
+
+    try {
+      // Get local results immediately
+      const localResults = searchLocationsLocal(query);
+
+      // Get API results
+      const apiResults = await searchLocationsAPI(query);
+
+      // Combine and remove duplicates (prefer API results for duplicates)
+      const combinedResults = [...apiResults];
+      
+      localResults.forEach(localResult => {
+        if (!apiResults.some(apiResult => 
+          apiResult.name.toLowerCase() === localResult.name.toLowerCase()
+        )) {
+          combinedResults.push(localResult);
+        }
+      });
+
+      return combinedResults.slice(0, 8); // Limit to 8 total results
+    } catch (error) {
+      console.error('Error getting locations:', error);
+      return searchLocationsLocal(query); // Fallback to local results
+    } finally {
+      setIsLoading(prev => ({ ...prev, [activeInput]: false }));
+    }
+  };
+
+  // Handle input change with debounce
+  const handleInputChange = (type, value) => {
+    setLocations(prev => ({ ...prev, [type]: value }));
+    setActiveInput(type);
+
+    // Clear previous timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Set new timer
+    debounceTimerRef.current = setTimeout(async () => {
+      const results = await getCombinedLocations(value);
+      setSuggestions(prev => ({ ...prev, [type]: results }));
+    }, 300); // 300ms debounce
+  };
+
+  // Handle suggestion selection
+  const handleSelectSuggestion = (type, suggestion) => {
+    setLocations(prev => ({ ...prev, [type]: suggestion.name }));
+    setSuggestions(prev => ({ ...prev, [type]: [] }));
+    setActiveInput(null);
+  };
+
+  // Suggestion dropdown component
+  const SuggestionsDropdown = ({ type, suggestions }) => {
+    if (activeInput !== type || (!suggestions.length && !isLoading[type])) return null;
+
+    return (
+      <div 
+        ref={dropdownRef}
+        className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-48 overflow-y-auto"
+      >
+        {isLoading[type] ? (
+          <div className="px-4 py-2 text-gray-500 text-sm">
+            Searching locations...
+          </div>
+        ) : suggestions.length > 0 ? (
+          suggestions.map((suggestion, index) => (
+            <div
+              key={index}
+              className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2"
+              onClick={() => handleSelectSuggestion(type, suggestion)}
+            >
+              <MapPin className="w-4 h-4 text-gray-400" />
+              <div>
+                <span className="text-gray-700">{suggestion.name}</span>
+                <span className="text-xs text-gray-400 ml-2">
+                  {suggestion.source === 'api' ? '(Maps)' : '(Local)'}
+                </span>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="px-4 py-2 text-gray-500 text-sm">
+            No locations found
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setActiveInput(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   // Calculate fare based on location input changes
   useEffect(() => {
@@ -78,47 +233,57 @@ function RideCard({ isOpen, onClose }) {
     }
   }, [locations.pickup, locations.dropoff]);
 
-  const handleBooking = async () => {
-    // Validate mobile money number if that payment method is selected
-    if (paymentMethod === 'mobile' && !mobileNumber.trim()) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Mobile Number Required',
-        text: 'Please enter your mobile money number',
-        confirmButtonColor: '#EAB308'
-      });
-      return;
-    }
-
+  const handleBookRide = async () => {
     try {
-      await Swal.fire({
-        icon: 'success',
-        title: 'Booking Confirmed!',
-        text: 'Looking for nearby drivers...',
-        timer: 2000,
+      // Create new ride with actual locations from the form
+      const newRide = {
+        id: Date.now(),
+        pickup: locations.pickup.address || locations.pickup, // Make sure we get the full address
+        dropoff: locations.dropoff.address || locations.dropoff,
+        fare: fare.amount,
+        estimatedFare: fare.amount,
+        estimatedTime: fare.time,
+        status: 'Searching Driver',
+        paymentType: paymentMethod,
+        date: new Date().toLocaleString()
+      };
+
+      // Save to localStorage with the actual locations
+      const existingRides = JSON.parse(localStorage.getItem('userRides') || '[]');
+      const updatedRides = [newRide, ...existingRides];
+      localStorage.setItem('userRides', JSON.stringify(updatedRides));
+
+      // Show searching for driver dialog
+      Swal.fire({
+        title: 'Searching for Driver',
+        html: 'Please wait while we connect you with a driver...',
+        timer: 3000,
+        timerProgressBar: true,
         showConfirmButton: false,
-        position: 'center',
-        background: '#fff',
-        iconColor: '#EAB308',
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      }).then(() => {
+        // After driver found, update the ride status but keep locations
+        const rides = JSON.parse(localStorage.getItem('userRides'));
+        const updatedRides = rides.map((ride, index) => {
+          if (index === 0) {
+            return { ...ride, status: 'Driver Assigned' };
+          }
+          return ride;
+        });
+        localStorage.setItem('userRides', JSON.stringify(updatedRides));
+
+        navigate('/searchingdriver');
       });
 
-      onClose();
-      navigate('/searchingdriver', { 
-        state: { 
-          pickup: locations.pickup, 
-          dropoff: locations.dropoff,
-          estimatedFare: fare.amount,
-          paymentMethod: paymentMethod,
-          mobileNumber: mobileNumber
-        } 
-      });
-      
     } catch (error) {
+      console.error('Booking error:', error);
       Swal.fire({
         icon: 'error',
         title: 'Booking Failed',
         text: 'Unable to book your ride. Please try again.',
-        confirmButtonColor: '#EAB308'
+        confirmButtonColor: '#EF4444'
       });
     }
   };
@@ -126,8 +291,8 @@ function RideCard({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-md m-4 animate-fade-in">
+    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-full max-w-md px-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl p-6">
         <div className="relative p-6">
           {/* Close button */}
           <button
@@ -162,10 +327,12 @@ function RideCard({ isOpen, onClose }) {
                 <input
                   type="text"
                   value={locations.pickup}
-                  onChange={(e) => setLocations({ ...locations, pickup: e.target.value })}
+                  onChange={(e) => handleInputChange('pickup', e.target.value)}
+                  onFocus={() => setActiveInput('pickup')}
                   placeholder="Enter pickup location"
                   className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 />
+                <SuggestionsDropdown type="pickup" suggestions={suggestions.pickup} />
               </div>
             </div>
             
@@ -178,10 +345,12 @@ function RideCard({ isOpen, onClose }) {
                 <input
                   type="text"
                   value={locations.dropoff}
-                  onChange={(e) => setLocations({ ...locations, dropoff: e.target.value })}
+                  onChange={(e) => handleInputChange('dropoff', e.target.value)}
+                  onFocus={() => setActiveInput('dropoff')}
                   placeholder="Enter destination"
                   className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 />
+                <SuggestionsDropdown type="dropoff" suggestions={suggestions.dropoff} />
               </div>
             </div>
           </div>
@@ -246,7 +415,7 @@ function RideCard({ isOpen, onClose }) {
               Cancel
             </button>
             <button
-              onClick={handleBooking}
+              onClick={handleBookRide}
               className="flex-1 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!locations.pickup || !locations.dropoff || (paymentMethod === 'mobile' && !mobileNumber)}
             >
